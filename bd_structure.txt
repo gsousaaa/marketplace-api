@@ -1,0 +1,37 @@
+users
+    id_user
+    name
+    email
+    state
+    passwordHash
+    token
+
+
+states 
+    id_state
+    name 
+
+
+categories
+    id_category
+    name
+    slug
+
+
+ads
+    id_ad
+    id_user
+    state
+    category
+    images [{url, default: true}]
+    dateCreated
+    title
+    price
+    priceNegotiable: true
+    description
+    views
+    status
+
+
+
+
