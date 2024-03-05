@@ -2,14 +2,20 @@ const mongoose = require("mongoose")
 mongoose.Promise = global.Promise
 
 const modelSchema =  new mongoose.Schema({
-    name: String, 
-    email: String,
+    id_user: String, 
     state: String,
-    passwordHash: String, 
-    token: String
+    category: String, 
+    images: [Object],
+    dateCreated: Date,
+    title: String, 
+    price: Number, 
+    priceNegotiable: Boolean,
+    description: String,
+    views: Number,
+    status: String
 })
 
-const modelName = 'User'
+const modelName = 'Ad'
 
 if (mongoose.connection && mongoose.connections.models[modelName]) {
     module.exports = mongoose.connection.models[modelName]
