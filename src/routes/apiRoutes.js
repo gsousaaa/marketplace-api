@@ -28,3 +28,4 @@ router.get('/ad/item', adsController.getItem)
 router.post('ad/:id', Auth.private, adsController.editAction)
 
 module.exports = router
+

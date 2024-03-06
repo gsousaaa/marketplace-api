@@ -11,6 +11,7 @@ module.exports = {
             errorMessage: 'Nome precisa ter no mínimo 2 caraacteres'
         }, 
         email: {
+            notEmpty: true,
             isEmail: true,
             normalizeEmail: true, 
             errorMessage: 'Email inválido.'
