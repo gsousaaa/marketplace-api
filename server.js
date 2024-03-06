@@ -4,6 +4,7 @@ const mongoose = require("mongoose")
 const cors = require("cors")
 const fileUpload = require("express-fileupload")
 
+const apiRoutes = require('./src/routes/apiRoutes')
 
 dotenv.config()
 
@@ -22,9 +23,7 @@ app.use(fileUpload())
 
 app.use(express.static(__dirname+'/public'))
 
-app.get('/ping', (req, res) => {
-    res.json({ pong: true })
-})
+app.use('/', apiRoutes)
 
 app.listen(process.env.PORT, () => {
     console.log(`Server rodando no endereco ${process.env.BASE}`)
