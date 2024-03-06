@@ -6,6 +6,7 @@ const Auth = require('../middlewares/auth')
 const authController = require("../controllers/authController")
 const userController = require("../controllers/userController")
 const adsController = require("../controllers/adsController")
+const authValidator = require("../validators/authValidator")
 
 router.get('/ping', (req, res)=> {
     res.json({pong: true})
@@ -14,7 +15,7 @@ router.get('/ping', (req, res)=> {
 router.get('/states', userController.getStates)
 
 router.post('/user/signin', authController.signin)
-router.post('/user/signup', authController.signup)
+router.post('/user/signup', authValidator.signup, authController.signup)
 
 router.get('/user/me', Auth.private, userController.info)
 router.put('/user/me', Auth.private, userController.editInfo)
