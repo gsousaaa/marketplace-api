@@ -14,7 +14,7 @@ router.get('/ping', (req, res)=> {
 
 router.get('/states', userController.getStates)
 
-router.post('/user/signin', authController.signin)
+router.post('/user/signin', authValidator.signin, authController.signin)
 router.post('/user/signup', authValidator.signup, authController.signup)
 
 router.get('/user/me', Auth.private, userController.info)
