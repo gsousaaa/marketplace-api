@@ -4,7 +4,7 @@ module.exports = {
     private: async (req, res, next) => {
        // Verificando se o token é enviado no body ou na query
         if(!req.query.token && !req.body.token) {
-            res.json({notAllowerd: true})
+            res.json({notAllowed: true})
             return
         }
 
@@ -19,19 +19,20 @@ module.exports = {
         }
 
         // Verificando se o token é vazio
-        if(token = '') {
+        if(token == '') {
             res.json({notAllowerd: true})
             return
         }
 
         // verificando se o token é válido
-        const user =  User.findOne({token})
+        const user =  await User.findOne({token})
 
         if(!user) {
-            res.json({notAllowerd: true})
+            res.json({notAllowed: true})
             return
         }
 
         next()
     }
 } 
+
