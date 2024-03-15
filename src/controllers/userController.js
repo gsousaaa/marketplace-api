@@ -15,7 +15,7 @@ module.exports = {
     },
 
     info: async (req, res) => {
-        let token = req.body.token
+        let token = req.query.token
 
         const user = await User.findOne({ token })
         const state = await State.findById(user.state)
