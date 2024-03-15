@@ -37,6 +37,17 @@ module.exports = {
             return
         }
 
+        const category = await Category.findById(cat)
+        if(category.length < 12) {
+            res.json({error: 'id da categoria inválido'})
+            return
+        }
+
+        if(!category) {
+            res.json({Error: 'categoria inexistente'})
+            return
+        }
+
         if (price) {
             //Tratando o valor de price para inserir no banco de dados
             price = price.replace('.', '').replace(',', '.').replace('R$ ', '')
@@ -46,7 +57,7 @@ module.exports = {
         }
 
         const newAd = new Ad()
-        newAd.idUser = user._id
+        newAd.id_user = user._id
         newAd.state = user.state
         newAd.dateCreated = new Date()
         newAd.category = cat
