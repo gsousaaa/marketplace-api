@@ -19,7 +19,8 @@ module.exports = {
 
         const user = await User.findOne({ token })
         const state = await State.findById(user.state)
-        const ads = await Ad.find({ id_user: user._id.toString() })
+        const idUserString = user._id.toString()
+        const ads = await Ad.find({ id_user: idUserString })
 
         let adList = []
         for (let i in ads) {
