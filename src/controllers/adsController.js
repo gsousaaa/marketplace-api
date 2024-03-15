@@ -4,6 +4,7 @@ const jimp = require('jimp')
 const Category = require('../models/Category')
 const User = require('../models/User')
 const Ad = require('../models/Ad')
+const State = require('../models/State')
 
 const addImage = async (buffer) => {
     let newName = `${uuid()}.jpg`
@@ -65,6 +66,7 @@ module.exports = {
         newAd.price = price
         newAd.priceNegotiable = (priceneg == 'true') ? true : false
         newAd.description = desc
+        newAd.status = true
         newAd.views = 0
 
         if (req.files && req.files.img) {
@@ -102,7 +104,61 @@ module.exports = {
     },
 
     getList: async (req, res) => {
+        let { sort = 'asc', offset = 0, limit = 8, q, cat, state} = req.query
+        let filters = {status: true}
+        let total = 0
 
+        //filter de pesquisa
+        if(q) {
+            filters.title = {'$regex': q, '$options': 'i'}
+        }
+        
+        if(cat) {
+            const c = await Category.findOne({slug: cat}).exec()
+            if(c) {
+                let idToString = c._id.toString()
+                filters.category = idToString
+            }
+        }
+
+        if(state) {
+            const stateName = state.toUpperCase()
+            const s = await State.findOne({name: stateName}).exec()
+            if(s){
+                let idToString = s._id.toString()
+                filters.state = idToString
+            }
+        }
+
+        let adsTotal = await Ad.find(filters).exec()
+        total = adsTotal.length
+        
+        const adsData = await Ad.find(filters)
+            .sort({dateCreated: (sort == 'desc'?-1:1)})
+            .skip(parseInt(offset))
+            .limit(parseInt(limit))
+        .exec()
+        let ads = []
+
+        for(let i in adsData) {
+            let image
+            let defaultImage  = adsData[i].images.find(e => e.default)
+            if(defaultImage) {
+                image = `${process.env.BASE}/media/${defaultImage.url}`
+            } else {
+                image = `${process.env.BASE}/media/default.jpg`
+            }
+
+            ads.push({
+                id: adsData[i]._id, 
+                title: adsData[i].title,
+                price: adsData[i].price,
+                priceNegotiable: adsData[i].priceNegotiable,
+                image
+            })
+        }
+
+        res.json({ads, total})
     },
 
     getItem: async (req, res) => {
