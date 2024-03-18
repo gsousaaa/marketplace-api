@@ -1,5 +1,6 @@
 const { v4: uuid } = require('uuid')
 const jimp = require('jimp')
+const ObjectId = require('mongoose').Types.ObjectId;
 
 const Category = require('../models/Category')
 const User = require('../models/User')
@@ -39,13 +40,13 @@ module.exports = {
         }
 
         const category = await Category.findById(cat)
-        if(category.length < 12) {
-            res.json({error: 'id da categoria inválido'})
+        if (category.length < 12) {
+            res.json({ error: 'id da categoria inválido' })
             return
         }
 
-        if(!category) {
-            res.json({Error: 'categoria inexistente'})
+        if (!category) {
+            res.json({ Error: 'categoria inexistente' })
             return
         }
 
@@ -104,27 +105,27 @@ module.exports = {
     },
 
     getList: async (req, res) => {
-        let { sort = 'asc', offset = 0, limit = 8, q, cat, state} = req.query
-        let filters = {status: true}
+        let { sort = 'asc', offset = 0, limit = 8, q, cat, state } = req.query
+        let filters = { status: true }
         let total = 0
 
-        //filter de pesquisa
-        if(q) {
-            filters.title = {'$regex': q, '$options': 'i'}
+        //filtro de pesquisa
+        if (q) {
+            filters.title = { '$regex': q, '$options': 'i' }
         }
-        
-        if(cat) {
-            const c = await Category.findOne({slug: cat}).exec()
-            if(c) {
+        //filtro por categoria
+        if (cat) {
+            const c = await Category.findOne({ slug: cat }).exec()
+            if (c) {
                 let idToString = c._id.toString()
                 filters.category = idToString
             }
         }
-
-        if(state) {
+        //filtro por estado
+        if (state) {
             const stateName = state.toUpperCase()
-            const s = await State.findOne({name: stateName}).exec()
-            if(s){
+            const s = await State.findOne({ name: stateName }).exec()
+            if (s) {
                 let idToString = s._id.toString()
                 filters.state = idToString
             }
@@ -132,25 +133,25 @@ module.exports = {
 
         let adsTotal = await Ad.find(filters).exec()
         total = adsTotal.length
-        
+
         const adsData = await Ad.find(filters)
-            .sort({dateCreated: (sort == 'desc'?-1:1)})
+            .sort({ dateCreated: (sort == 'desc' ? -1 : 1) })
             .skip(parseInt(offset))
             .limit(parseInt(limit))
-        .exec()
+            .exec()
         let ads = []
 
-        for(let i in adsData) {
+        for (let i in adsData) {
             let image
-            let defaultImage  = adsData[i].images.find(e => e.default)
-            if(defaultImage) {
+            let defaultImage = adsData[i].images.find(e => e.default)
+            if (defaultImage) {
                 image = `${process.env.BASE}/media/${defaultImage.url}`
             } else {
                 image = `${process.env.BASE}/media/default.jpg`
             }
 
             ads.push({
-                id: adsData[i]._id, 
+                id: adsData[i]._id,
                 title: adsData[i].title,
                 price: adsData[i].price,
                 priceNegotiable: adsData[i].priceNegotiable,
@@ -158,11 +159,67 @@ module.exports = {
             })
         }
 
-        res.json({ads, total})
+        res.json({ ads, total })
     },
 
     getItem: async (req, res) => {
+        let { id, other = null } = req.query
 
+        
+        function isValidObjectId(id) {
+            if (ObjectId.isValid(id)) {
+                if ((new ObjectId(id).toString()) === id) {
+                    return true;
+                }
+                return false;
+            }
+            return false;
+        }
+
+        if (!id) {
+            res.json({ error: 'Sem anuncio' })
+            return
+        }
+
+        if(!isValidObjectId(id)) {
+            res.json({error: 'Id inválido'})
+            return
+        }
+
+        const ad = await Ad.findById(id).exec()
+        if (!ad) {
+            res.json({ error: 'Anúncio inexistente' })
+            return
+        }
+
+        ad.views++
+        await ad.save()
+
+        let images = []
+        for (let i in images) {
+            images.push(`${process.env.BASE}/MEDIA/${ad.images[i].url}`)
+        }
+
+        let category = await Category.findById(ad.category).exec()
+        let userInfo = await User.findById(ad.id_user).exec()
+        let stateInfo = await State.findById(ad.state).exec()
+
+        res.json({
+            id: ad._id,
+            title: ad.title,
+            price: ad.price,
+            priceNegotiable: ad.priceNegotiable,
+            description: ad.description,
+            dateCreated: ad.dateCreated,
+            views: ad.views,
+            images,
+            category,
+            userInfo: {
+                name: userInfo.name,
+                email: userInfo.email
+            },
+            stateName: stateInfo.name
+        })
     },
 
     editAction: async (req, res) => {
