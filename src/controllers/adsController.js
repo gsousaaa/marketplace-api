@@ -195,8 +195,8 @@ module.exports = {
         await ad.save()
 
         let images = []
-        for (let i in images) {
-            images.push(`${process.env.BASE}/MEDIA/${ad.images[i].url}`)
+        for (let i in ad.images) {
+            images.push(`${process.env.BASE}/media/${ad.images[i].url}`)
         }
 
         let category = await Category.findById(ad.category).exec()
@@ -252,7 +252,7 @@ module.exports = {
 
     editAction: async (req, res) => {
         let { id } = req.params
-        let { title, status, price, priceneg, desc, cat, images, token } = req.body
+        let { title, status, price, priceneg, desc, cat, img, token } = req.body
 
         if (!id) {
             res.json({ error: 'Sem anuncio' })
@@ -310,11 +310,40 @@ module.exports = {
             updates.category = idCategoryString
         }
 
-        if(images) {
-            updates.images = images
+        if(img) {
+            updates.images = img
         }
 
         await Ad.findByIdAndUpdate(id, {$set: updates})
+
+       //Adicionando nova imagem
+       const product = await Ad.findById(id).exec();        
+       let imagesUpdates = product.images;
+
+       if (req.files && req.files.img) {
+            if (req.files.img.length == undefined) {
+                 if (['image/jpeg', 'image/jpg', 'image/png'].includes(req.files.img.mimetype)) {
+                      let url = await addImage(req.files.img.data);
+                      imagesUpdates.push({
+                      url,
+                      default: false
+                      });
+                 }
+            } else {
+                 for (let i = 0; i < req.files.img.length; i++) {
+                      if (['image/jpeg', 'image/jpg', 'image/png'].includes(req.files.img[i].mimetype)) {
+                           let url = await addImage(req.files.img[i].data);
+                                 imagesUpdates.push({
+                                url,
+                                default: false
+                           })
+                           };
+                      }
+                 }
+                 console.log(imagesUpdates);
+                 await Ad.findByIdAndUpdate(id, {$set: { images: imagesUpdates }});
+                
+            }
         res.json({message: 'Anúncio editado'})
     }
 }
