@@ -26,7 +26,7 @@ router.get('/categories', adsController.getCategories)
 router.post('/ad/add', Auth.private, adsController.addAction)
 router.get('/ad/list', adsController.getList)
 router.get('/ad/item', adsController.getItem) 
-router.post('ad/:id', Auth.private, adsController.editAction)
+router.post('/ad/:id', Auth.private, adsController.editAction)
 
 module.exports = router
 

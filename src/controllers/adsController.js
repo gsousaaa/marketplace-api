@@ -14,6 +14,16 @@ const addImage = async (buffer) => {
     return newName
 }
 
+const isValidObjectId = (id) => {
+    if (ObjectId.isValid(id)) {
+        if ((new ObjectId(id).toString()) === id) {
+            return true;
+        }
+        return false;
+    }
+    return false;
+}
+
 module.exports = {
     getCategories: async (req, res) => {
         const cats = await Category.find()
@@ -165,24 +175,13 @@ module.exports = {
     getItem: async (req, res) => {
         let { id, other = null } = req.query
 
-        
-        function isValidObjectId(id) {
-            if (ObjectId.isValid(id)) {
-                if ((new ObjectId(id).toString()) === id) {
-                    return true;
-                }
-                return false;
-            }
-            return false;
-        }
-
         if (!id) {
             res.json({ error: 'Sem anuncio' })
             return
         }
 
-        if(!isValidObjectId(id)) {
-            res.json({error: 'Id inválido'})
+        if (!isValidObjectId(id)) {
+            res.json({ error: 'Id inválido' })
             return
         }
 
@@ -205,19 +204,19 @@ module.exports = {
         let stateInfo = await State.findById(ad.state).exec()
 
         let others = []
-        if(other) {
-            const otherData = await Ad.find({status: true, id_user: ad.id_user}).exec()
+        if (other) {
+            const otherData = await Ad.find({ status: true, id_user: ad.id_user }).exec()
 
-            for(let i in otherData) {
+            for (let i in otherData) {
                 let otherIdString = otherData[i]._id.toString()
                 let adIdString = ad._id.toString()
-                
-                if( otherIdString != adIdString) {
+
+                if (otherIdString != adIdString) {
 
                     let image = `${process.env.BASE}/media/default.jpg`
-                    
+
                     let defaultImg = otherData[i].images.find(e => e.default)
-                    if(defaultImg) {
+                    if (defaultImg) {
                         image = `${process.env.BASE}/media/${defaultImg.url}`
                     }
 
@@ -252,7 +251,71 @@ module.exports = {
     },
 
     editAction: async (req, res) => {
+        let { id } = req.params
+        let { title, status, price, priceneg, desc, cat, images, token } = req.body
 
+        if (!id) {
+            res.json({ error: 'Sem anuncio' })
+            return
+        }
+
+        if (!isValidObjectId(id)) {
+            res.json({ error: 'Id inválido' })
+            return
+        }
+
+        const ad = await Ad.findById(id).exec()
+
+        if (!ad) {
+            res.json({ error: 'Anúncio inexistente' })
+            return
+        }
+
+        const user = await User.findOne({ token }).exec()
+        let userIdString = user._id.toString()
+        let adIdUserString = ad.id_user.toString()
+
+        if (userIdString !== adIdUserString) {
+            res.json({ error: 'Esse anúncio não é seu' })
+            return
+        }
+
+        let updates = {}
+
+        if (title) {
+            updates.title = title
+        }
+        if (price) {
+            //Tratando o valor de price para inserir no banco de dados
+            price = price.replace('.', '').replace(',', '.').replace('R$ ', '')
+            price = parseFloat(price)
+            updates.price = price
+        }
+        if (priceneg) {
+            updates.priceNegotiable = priceneg
+        }
+        if (status) {
+            updates.status = status
+        }
+        if (desc) {
+            updates.description = desc
+        }
+        if (cat) {
+            const category = await Category.findOne({ slug: cat }).exec()
+            if (!category) {
+                res.json({ error: 'Categoria não encontrada' })
+                return
+            }
+            let idCategoryString = category._id.toString()
+            updates.category = idCategoryString
+        }
+
+        if(images) {
+            updates.images = images
+        }
+
+        await Ad.findByIdAndUpdate(id, {$set: updates})
+        res.json({message: 'Anúncio editado'})
     }
 }
 
